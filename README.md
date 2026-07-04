@@ -3,6 +3,7 @@
 - [Background](#introduction) 
 - [Software and Tools](#software)
 - [Repository Structure](#repostructure)
+- [RShiny Dashboard](#dashboard)
 - [References](#references)
  
 ## <a id="introduction"></a> Background
@@ -51,6 +52,10 @@ The structure of the repository is as follows however, the data, results, logs a
 - `visualisations/` 
     - All graphical and visual outputs from analysis. Directories are sorted based on post-SOLAR filtering and within trait analyses.
 
+## <a id="dashboard"></a> RShiny Dashboard
+Below is a preview of the RShiny Dashboard for IP-Protein pairs. This interactive dashboard enables dynamic exploration of the respective network where users can selectively filter for IPs, proteins, correlation strength and modules. Hover information is additionally embedded within, allowing quick access to edge and node information.
+
+<img width="1649" height="1218" alt="rshiny_example" src="https://github.com/user-attachments/assets/2ec4df4c-a465-4df6-986c-aa035262dff2" />
 
 ## <a id="references"></a> References
 
