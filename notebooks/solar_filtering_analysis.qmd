@@ -1,12 +1,14 @@
+------------------------------------------------------------------------
+
 ---
 title: "solar_analysis_filtering"
 format: html
 editor: visual
 ---
 
-# SOLAR Results Analysis
+# SOLAR Results Analysis (IP-Protein)
 
-After obtaining the IP-Protein associations from the SOLAR analysis. Exploration and filtering is needed for interpretation.
+SOLAR analysis was applied to IP-protein pairs. Partitioning of the genetic and environmental networks through different thresholds and filters will enable exploration for interpretation of the immune system.
 
 ## 1. Set up
 
@@ -43,12 +45,19 @@ library(visNetwork) #interactive network
 #Importing the summary results
 summary_results<- read.delim("~/Twins_Project/data/solar_analysis/summary_heritability.csv")
 
-#Loading in the dataset for sup.lineage information 
+#Loading in the original dataset for information on IP and proteisn
 load("~/Twins_Project/data/raw_olink_ip/results/Olink_associations.RData")
+load("~/Twins_Project/data/raw_olink_ip/data/dataset.RData")
 ```
 
+### 1.3 Save Path
+
 ```{r}
+#output for figures/visuals
 output_path <- "~/Twins_Project/visualisations"
+
+#csv save path
+summary_csv_path <- "~/Twins_Project/notebooks"
 ```
 
 ## 2. Filtering of Significant IP-Protein Associations
@@ -64,12 +73,11 @@ summary_results_fdr <- summary_results %>%
     rhoG_FDR = p.adjust(rhoG_p0, method = "fdr"),
     rhoE_FDR = p.adjust(rhoE_p, method = "fdr")
   )
-
 ```
 
 ### 2.2 Adding in Lineages from infoF dataframe
 
-Using Sup.Lineage as it contains T cells, NK cells, monocytes, dendritic cells, B cells to determine the IP lineages.
+Adding in sup, sub-lineage and phenotype (representing surface marker expression) information
 
 ```{r}
 #Need to clean the IMMUNO_X.new names to match summary_result_fdr as it doesnt have .new
@@ -102,29 +110,14 @@ genetic_0.1_hits <- sum_results_combined %>%
   filter(h2r1 > 0.1 & h2r2 > 0.1 & rhoG_FDR < 0.05)
 #4300
 
-genetic_0.3_hits <- sum_results_combined %>%
-  filter(h2r1 > 0.3 & h2r2 > 0.3 & rhoG_FDR < 0.05)
-#4047
 
-genetic_0.5_hits <- sum_results_combined %>%
-  filter(h2r1 > 0.5 & h2r2 > 0.5 & rhoG_FDR < 0.05)
-#1068
-
-
-
-#Saving in path csv
-summary_csv_path <- "~/Twins_Project/notebooks"
-
+#Saving as csv
 write.csv(genetic_0.1_hits, file = file.path(summary_csv_path, "genetic_pairs_summary.csv"), row.names = FALSE)
 ```
 
 #### Environmental hits
 
-Only accounting for rhoE as h2r can be low or high
-
-environmental_hits \<- sum_results_combined %\>%
-
-filter(rhoE_FDR \< 0.05)
+Only accounting for rhoE as heritability is not required
 
 ```{r}
 #Only accounting for rhoE as h2r can be low or high 
@@ -137,11 +130,11 @@ env_2x_hits<- sum_results_combined %>%
   filter(abs(rhoE) >= 2 * abs(rhoG))
 
 
-#Saving
+#Saving as CSV
 write.csv(env_2x_hits, file = file.path(summary_csv_path, "env_pairs_summary.csv"), row.names = FALSE)
 ```
 
-#### Both hits
+#### Both hits - dual 
 
 ```{r}
 #Significant in both genetic and environmental correlations
@@ -160,13 +153,6 @@ Further filtering of genetically correlated pairs with environmental association
 gen_env_0.1 <- genetic_0.1_hits %>%
   filter(rhoE_p < 0.05)
 
-gen_env_0.3 <- genetic_0.3_hits %>%
-  filter(rhoE_p < 0.05)
-#same 130 pairs 
-
-gen_env_0.5 <- genetic_0.5_hits %>%
-  filter(rhoE_p < 0.05)
-#only 1 IMMUNO_41521 TNFB
 ```
 
 #### Environmental -\> Genetics
@@ -175,15 +161,63 @@ gen_env_0.5 <- genetic_0.5_hits %>%
 #Environmental -> how many are genetics
 env_gen <- environmental_hits%>%
   filter(rhoG_p0<0.05)
-
 ```
 
 ### 2.5 Saving the output environment
 
-Saving to be loaded elsewhere.
+Saving to be loaded elsewhere downstream in the analysis.
 
 ```{r}
 save.image(file = "solar_analysis_filtering_results.RData")
+```
+
+## 2.6 Saving dataframe combined all IPs, Proteins, covariates
+
+```{r}
+#Transformations used
+inverse.normal <- function(data) {
+  v <- as.numeric(as.character(data))
+  v <- round(qnorm((rank(v, na.last="keep")-0.5)/sum(!is.na(v))), digits=2)
+  v
+}
+
+remove.outliers <- function(data, t) {
+  v <- as.numeric(as.character(data))
+  m <- mean(v, na.rm = T)
+  s <- sd(v, na.rm = T) * t
+  v <- sapply(v, function(x) {ifelse(x > m+s | x < m-s, NA, x)})
+  v
+}
+
+#Collating all covariates, proteins, ips into one
+#Implementing applied filters used before SOLAR
+ip_protein_covariate_transformed <- dataset %>%
+  mutate(across(c(id, fid), ~as.numeric(as.character(.)))) %>%
+  filter(`QC Warning` == "Pass") %>%
+  group_by(fid) %>%
+  filter(n() == 2) %>% 
+  ungroup() %>%
+  #Selecting columns used as covariates
+  select(
+    id, 
+    fid, 
+    Age, 
+    BMI, 
+    season, 
+    `Plate ID`, 
+    Freezing_time,
+    `4E-BP1`:last_col() 
+  ) %>%
+  #Obtaining the protein and IP columns and applying the transformations
+  mutate(
+    across(`4E-BP1`:last_col(), ~ remove.outliers(.x, 4))
+  ) %>%
+  mutate(
+    across(`4E-BP1`:last_col(), ~ inverse.normal(.x))
+  )
+
+#Saving as RData for transportation
+save(ip_protein_covariate_transformed , file = "ip_protein_covariate.RData")
 ```
 
 ## 3. Exploration of the overall cohort
@@ -215,7 +249,6 @@ rhoP_plot<- ggplot(sum_results_combined, aes(x = rhoP)) +
     axis.line = element_line(color = "black"),
     panel.grid.major.y = element_blank() #No vertical lines
   )
-
 
 
 #Saving plot
@@ -295,7 +328,7 @@ In the 0.1 and 0.3 top hits, find what proteins are most frequent/popular for ge
 
 #### Top 15 Proteins
 
-Better Visualisation.
+Better visualisation.
 
 ```{r}
 top_15_proteins <- ip_per_protein %>%
@@ -404,18 +437,18 @@ ggsave(
 ### Plot Combination
 
 ```{r}
-
+#Spacer divider for aesthetics
 spacer <-("
   #1111#
   222333
 ")
 
+#Combining panel
 overall_ip_prot_dis_panels <- (rhoP_plot)/
   (top_15_proteins + ip_shared_prot_plot)+
     plot_layout(heights = c(1, 1))
 
-  overall_ip_prot_dis_panels<- rhoP_plot +top_15_proteins+ip_shared_prot_plot +plot_layout(design = spacer)+
-  
+overall_ip_prot_dis_panels<- rhoP_plot +top_15_proteins+ip_shared_prot_plot +plot_layout(design = spacer)+
 plot_annotation(
     tag_levels = 'A') &
   theme(
@@ -426,6 +459,7 @@ plot_annotation(
   )
 
 print (overall_ip_prot_dis_panels)
+
 #Saving 
 ggsave(
   filename = "overall_cohort/Overall_IP_Prot_Final_Panel.png",
@@ -604,6 +638,7 @@ comb_overall_rho <- (rho_dis_overall / indiv_lin_rho_dis ) +
 
 print(comb_overall_rho)
 
+#Saving 
 ggsave(
   filename = "overall_cohort/Overall_Combined_Correlations_Dotplot.png", 
   plot = comb_overall_rho ,
@@ -653,12 +688,10 @@ conv_matrix <- function(df, value_col) {
   
   mat <- df %>%
     select(trait1, trait2, all_of(value_col)) %>% 
-    
     pivot_wider(
       names_from = trait2,   #changing proteins column
       values_from = all_of(value_col)
     ) %>%
-
     column_to_rownames("trait1") %>%
     as.matrix()
   
@@ -677,7 +710,7 @@ With the genetic hits filtered for h2r \> 0.1.
 
 These are genetic hits and likely instigators of inflammaging. Likely related to ageing.
 
-### 6.1 Summary IP to Protein
+### 6.1 Summary IP to Protein Stats
 
 #### Number of IPs and Proteins
 
@@ -738,8 +771,11 @@ top_gen_proteins_table <- genetic_0.1_hits %>%
   ) %>%
   arrange(desc(Protein_Total_Connections), Protein, Sup.Lineage, Phenotype)
 
+#Saving as CSV
 write.csv(top_gen_proteins_table , file = file.path(summary_csv_path, "Top_Gen_Proteins.csv"), row.names = FALSE)
 ```
+
+#### Graph
 
 ```{r}
 gen_top15_prot <-ip_per_protein_gen %>%
@@ -817,8 +853,11 @@ top_gen_ips_table <- genetic_0.1_hits %>%
   ) %>%
   arrange(desc(IP_Total_Connections), IP, Protein)
 
+#Saving as CSV
 write.csv(top_gen_ips_table, file = file.path(summary_csv_path, "Top_Gen_IPs.csv"), row.names = FALSE)
 ```
+
+#### Graph
 
 ```{r}
 #DF conversion of the table
@@ -851,6 +890,7 @@ ip_shared_prot_plot_gen <- ggplot(ip_shared_prot_df_gen, aes(x = Num_Proteins, y
   )
 
 plot(ip_shared_prot_plot_gen)
+
 #Saving plot
 ggsave(
   filename = "genetic_hits/Gen_IP_Prot_Distribution.png", 
@@ -1045,14 +1085,12 @@ genetic_0.1_hits %>%
 #### Panelling
 
 ```{r}
-
+#Organising panles
 gen_panels <-  (gen_bidirection) /(gen_top15_prot + ip_shared_prot_plot_gen)+
     plot_layout(heights = c(1, 1))
 
 gen_panels <- gen_bidirection + gen_top15_prot + ip_shared_prot_plot_gen +
-  
   plot_layout(design = spacer) +
-  
   plot_annotation(  
     tag_levels = 'A'
   ) &
@@ -1061,6 +1099,7 @@ gen_panels <- gen_bidirection + gen_top15_prot + ip_shared_prot_plot_gen +
     plot.tag.position = c(0.08, 0.99),
     plot.tag = element_text(size = 18, face = "bold"))
 
+#Saving
 ggsave(
   filename = "genetic_hits/Genetic_Panels.png",
   plot = gen_panels,
@@ -1334,7 +1373,7 @@ ggsave(
 
 Investigating environmental_hits. Environmental markers - reactive in response externally. Likely not realted to ageing.
 
-### 7.1 Summary IP to Protein
+### 7.1 Summary IP to Protein Stats
 
 ```{r}
 environmental_hits %>%
@@ -1343,7 +1382,6 @@ environmental_hits %>%
     unique_IPs = n_distinct(trait1),
     unique_proteins = n_distinct(trait2)
   )
-
 ```
 
 ```{r}
@@ -1365,14 +1403,14 @@ environmental_hits %>%
 ### 7.2 Protein Distribution
 
 ```{r}
-
 ip_per_protein_env <- environmental_hits %>%   
   distinct(trait1, trait2) %>% #Should be unique but sanity checks   
   count(trait2, sort = TRUE, name = "n_IPs")  
 
 print(ip_per_protein_env)
-
 ```
+
+#### Graph
 
 ```{r}
 env_top15_prot <- ip_per_protein_env %>%   
@@ -1424,6 +1462,8 @@ shared_protein_ip_env <- table(ip_env_sharing$protein_count)
 
 shared_protein_ip_env 
 ```
+
+#### Graph
 
 ```{r}
 #DF conversion of the table 

@@ -1,17 +1,31 @@
 # Identification of Early Instigators of Inflammaging Within the TwinsUK Cohort
 
 - [Background](#introduction) 
+- [Software and Tools](#software)
 - [Repository Structure](#repostructure)
 - [References](#references)
  
 ## <a id="introduction"></a> Background
 
-This repository is part of an extended research project for the MSc Applied Bioinformatics course at King's College London. This research project aims to identify the early instigators of inflammaging within the TwinsUK cohort [[1]](#ref1). Inflammaging is the chronic, low grade inflammation that occurs during ageing [[2]](#ref2). While current studies focus on symptomatic cohorts, investigations with a general healthy ageing cohort can enable insights into early development of this intricate network where preventative interventions can be directed upon. This study aims to expand from the previous studies by Roederer et al. (2015) [[3]](#ref3) and Mangino et al. (2017) [[4]](#ref4) where heritability and genetic architectures of the immune system were observed though twin studies. With immunophenotypes (IPs) and immune related proteins obtained from patients, such pairs are investigated utilising the Twins design. Through the genetic variance components analysis tool [SOLAR-Eclipse](https://solar-eclipse-genetics.org/), heritability, genetic and environmental correlations were estimated for IP-Protein pairs. In turn, additional filtering applied enables research into the complex interplay for identification of early instigators. Due to the sensitive nature of the dataset used throughout this pipeline, the raw datasets are excluded from this repository for data privacy and adherence. Access to the data may be requested via application to TwinsUK [[1]](#ref1).
+This repository is part of an extended research project for the MSc Applied Bioinformatics course at King's College London. This research project aims to identify the early instigators of inflammaging within the TwinsUK cohort [[1]](#ref1). Inflammaging is the chronic, low grade inflammation that occurs during ageing [[2]](#ref2). While current studies focus on symptomatic cohorts, investigations with a general healthy ageing cohort can enable insights into early development of this intricate network where preventative interventions can be directed upon. This study aims to expand from the previous studies by Roederer et al. (2015) [[3]](#ref3) and Mangino et al. (2017) [[4]](#ref4) where heritability and genetic architectures of the immune system were observed though twin studies. With immunophenotypes (IPs) and immune related proteins obtained from patients, such pairs were investigated utilising the Twins design. Through the genetic variance components analysis tool [SOLAR-Eclipse](https://solar-eclipse-genetics.org/), heritability, genetic and environmental correlations were partitioned and estimated for IP-Protein pairs. In turn, additional filtering applied enabled research into the complex interplay for identification of early instigators. Due to the sensitive nature of the dataset used throughout this pipeline, the raw datasets are excluded from this repository for data privacy and adherence. Access to the data may be requested via application to TwinsUK [[1]](#ref1).
+
+##<a id="software"></a> Software and Tools
+
+All of the bioinformatics, computational analysis pipeline was conducted on the Computational Research, Engineering and Technology Environment (CREATE) high performance computing (HPC) [[5]](#ref5). This was conducted on RStudio and SOLAR-Eclipse was executed via the Linux shell environment. Main packages and versions are specified below:
+
+| Tool/Package | Version | Purpose |
+| :--- | :--- | :--- |
+| **R** | 4.3.0 | Statistical analysis & RShiny |
+| **SOLAR-Eclipse** | 9.0.1 | Genetic variance component analysis |
+| **lme4** | 2.0-1 | Linear mixed-effects modelling |
+| **ggplot2** | 4.0.3 | Data visualisation |
+| **igraph/ggraph** | 2.2.2 | Network analysis & visualisation |
+| **visNetwork** | 2.1.4 | Network graph |
+| **Shiny** | 1.13.0 | Dashboard |
 
 ## <a id="repostructure"></a> Repository Structure 
 
-All of the bioinformatics, computational analysis pipeline was conducted on the Computational Research, Engineering and Technology Environment (CREATE) high performance computing (HPC) [[5]](#ref5). Data, results, logs and software directories have been omitted from this GitHub repository. 
-
+The structure of the repository is as follows however, the data, results, logs and software directories have been omitted from this GitHub repository. 
 
 - `data/` 
     - Directory containing all of the data used in the workflow. This includes a copy of the raw data originals (untouched), CSVs from linear mixed-effects model (LMM) and SOLAR-Eclipse analysis outputs.

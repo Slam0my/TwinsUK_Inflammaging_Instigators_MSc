@@ -6,7 +6,7 @@ editor: visual
 
 # Data Exploration
 
-The first data access and exploration for understanding and investigation before downstream performance. From the original source folder, the directory has been copied to my personal directory.
+The first data access and exploration for understanding and investigation before downstream performance. From the original source folder, the directory has been copied to a personal directory.
 
 ------------------------------------------------------------------------
 
@@ -456,12 +456,12 @@ There are 27 unique lineages.
 ### 3.5 Unique IPs
 
 ```{r}
-count(tr$IP)
-length(unique(tr$IP)) 
+  
+unique_ips <- unique(tr$IP)
+# To see how many unique ones there are:
+length(unique_ips)
 
-#IP frequency
-tr %>%
-  count(IP, sort = TRUE)
+
 
 ```
 

@@ -105,7 +105,7 @@ ui <- dashboardPage(
       #GENETICS
       tabItem(tabName = "gen_pairs",
               h2("Genetically Significant Protein-Protein Pairs", align = "center"),
-              p("Analysis based on shared genetic architecture (ρG). This network is based on Leiden clustering with weights using |ρG|. ForceAtlas2 is used as a force directed layout. Please bare with the time for loading graphs. For these genetically signficant pairs, h² > 0.1 & ρG FDR < 0.05 was implemented. The maximum |ρG| between a pair reached 0.9. ", align = "center"),
+              p("Analysis based on shared genetic architecture (ρG). This network is based on Leiden clustering with weights using |ρG|. ForceAtlas2 is used as a force directed layout. For these genetically signficant pairs, h² > 0.1 & ρG FDR < 0.05 was implemented. The maximum |ρG| between a pair reached 0.9. ", align = "center"),
               #Sliders
               fluidRow(
                 box(title = "Filtering:", width = 4, status = "primary", solidHeader = TRUE,

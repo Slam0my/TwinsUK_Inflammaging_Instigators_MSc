@@ -6,7 +6,7 @@ editor: visual
 
 # Enrichment Analysis
 
-Idnetifying enrichment or depletion in the Genetic and Environmental filtered dataset to determine statistical outcomes. Using Fisher's exact test enables two sided (enriched or deleted) assessment for lineages of IPs
+Identifying signficiantly enriched or depleted IP lineages in the genetic and environmental filtered dataset to validate outcomes. Fisher's exact test was deployed, enabling a two sided assessment.
 
 ## 1. Set up
 
@@ -30,7 +30,7 @@ output_path <- "~/Twins_Project/notebooks"
 
 ## 2 IP info
 
-Obtaining sup and sub lineages for information in each subset
+Obtaining sup and sub lineages for information in each subset.
 
 ```{r}
 #Get all IPs from data
@@ -43,7 +43,7 @@ env_hit_ips <- env_2x_hits %>% distinct(trait1) %>% pull(trait1)
 
 ```
 
-## 3 Fishers
+## 3 Fishers Exact Test
 
 Creating a function to build the matrix for both. FDR also applied.
 
@@ -99,7 +99,7 @@ run_enrichment <- function(hit_list, background_df, target_column) {
 
 ## 4 Output
 
-### Genetic
+### Genetic subset
 
 ```{r}
 gen_sup_enrichment <- run_enrichment(gen_hit_ips, all_background_ips, "Sup.Lineage")
@@ -108,16 +108,14 @@ gen_sub_enrichment <- run_enrichment(gen_hit_ips, all_background_ips, "Sub.Linea
 #Bind Sup and sub lineages
 genetic_enrichment_results <- bind_rows(gen_sup_enrichment, gen_sub_enrichment)
 print(genetic_enrichment_results)
-
-
 ```
 
 ```{r}
+#Saving in a CSV file 
 write.csv(genetic_enrichment_results, file = file.path(output_path, "gen_ip_lin_enrichment.csv"), row.names = FALSE)
-
 ```
 
-### Environmental
+### Environmental subset
 
 ```{r}
 env_sup_enrichment <- run_enrichment(env_hit_ips, all_background_ips, "Sup.Lineage")
@@ -127,10 +125,9 @@ env_sub_enrichment <- run_enrichment(env_hit_ips, all_background_ips, "Sub.Linea
 #Bind Sup and sub lineages
 environmental_enrichment_results <- bind_rows(env_sup_enrichment, env_sub_enrichment)
 print(environmental_enrichment_results)
-
-
 ```
 
 ```{r}
+#Saving in a CSV file 
 write.csv(environmental_enrichment_results, file = file.path(output_path, "env_2x_ip_lin_enrichment.csv"), row.names = FALSE)
 ```

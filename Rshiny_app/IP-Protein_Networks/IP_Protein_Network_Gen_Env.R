@@ -142,7 +142,7 @@ ui <- dashboardPage(
       #GENETICS
       tabItem(tabName = "gen_pairs",
               h2("Genetically Significant IP-Protein Pairs", align = "center"),
-              p("Analysis based on shared genetic architecture (ρG) between Immunophenotypes (IPs) and Circulating Proteins. This network is based on Leiden clustering with weights using |ρG|. ForceAtlas2 is used as a force directed layout. Please bare with the time for loading graphs. For these genetically signficant pairs, h² > 0.1 & ρG FDR < 0.05 was implemented. The maximum |ρG| between a pair reached 0.83. The maximum number of proteins shared by IPs was 9.", align = "center"),
+              p("Analysis based on shared genetic architecture (ρG) between Immunophenotypes (IPs) and Circulating Proteins. This network is based on Leiden clustering with weights using |ρG|. ForceAtlas2 is used as a force directed layout. For these genetically signficant pairs, h² > 0.1 & ρG FDR < 0.05 was implemented. The maximum |ρG| between a pair reached 0.83. The maximum number of proteins shared by IPs was 9.", align = "center"),
               
               fluidRow(
                 #Sliders
@@ -154,6 +154,7 @@ ui <- dashboardPage(
                                 "Proteins per IP:", 
                                 min = 1, 
                                 max = 9, 
+                                
                                 value = 2, 
                                 step = 1),
                     sliderInput("gen_thresh", 
@@ -163,12 +164,13 @@ ui <- dashboardPage(
                                 value = 0.4,
                                 step = 0.05)
                 ),
-         
-              
+                
+                
                 #Dropdowns
                 box(title = "Selection:", 
                     width = 8, 
                     status = "primary", 
+                    
                     solidHeader = TRUE,
                     fluidRow(
                       column(4, selectInput("gen_mod", "Select Leiden Module:", choices = "All")),
@@ -186,6 +188,7 @@ ui <- dashboardPage(
                 box(title = "Key", 
                     width = 2, 
                     status = "primary", 
+                    
                     solidHeader = TRUE, 
                     uiOutput("gen_dynamic_legend"))
               )
@@ -202,16 +205,26 @@ ui <- dashboardPage(
                     status = "success", 
                     solidHeader = TRUE,
                     sliderInput("env_sharing", 
+                                
                                 "Proteins per IP:", 
+                                
                                 min = 1, 
+                                
                                 max = 6, 
+                                
                                 value = 2, 
+                                
                                 step = 1),
                     sliderInput("env_thresh", 
+                                
                                 "Min |ρE| Strength:", 
+                                
                                 min = 0.0, 
+                                
                                 max = 0.45, 
+                                
                                 value = 0.3, 
+                                
                                 step = 0.025),
                     hr(),
                     checkboxInput("env_dom_filter", "|ρE| ≥ 2x |ρG|", value = FALSE)),
@@ -236,7 +249,9 @@ ui <- dashboardPage(
                 box(title = "Key", 
                     width = 2, 
                     status = "success", 
+                    
                     solidHeader = TRUE, 
+                    
                     uiOutput("env_dynamic_legend"))
               )
       )
@@ -246,9 +261,19 @@ ui <- dashboardPage(
 
 
 
+
+
+
+
 #Server
 
+
+
 server <- function(input, output, session) {
+  
+  
+  
+  
   
   
   
@@ -270,15 +295,30 @@ server <- function(input, output, session) {
     
     lineage_colours <- make_lineage_palette(hub_data$Sub.Lineage)
     
+    # Base node data frame template
+    base_select_gen <- c("trait1", "Sub.Lineage")
+    if("Phenotype" %in% colnames(genetic_0.1_hits)) {
+      base_select_gen <- c(base_select_gen, "Phenotype")
+    }
+    
     nodes_df <- data.frame(name = unique(c(hub_data$trait1, hub_data$trait2))) %>%
-      left_join(genetic_0.1_hits %>% select(trait1, Sub.Lineage) %>% distinct(trait1, .keep_all = TRUE),
+      left_join(genetic_0.1_hits %>% 
+                  select(all_of(base_select_gen)) %>% 
+                  distinct(trait1, .keep_all = TRUE),
                 by = c("name" = "trait1")) %>%
       left_join(gen_module_lookup, by = "name") %>%
       mutate(
         type = ifelse(!is.na(Sub.Lineage), "IP", "Protein"),
-        shape_map = ifelse(type == "Protein", "Protein", Sub.Lineage),
+        shape_map = ifelse(type == "Protein", "Protein", Sub.Lineage), 
         module = ifelse(is.na(module), "Unassigned", module)
       )
+    
+    if("Phenotype" %in% colnames(nodes_df)) {
+      nodes_df <- nodes_df %>% 
+        mutate(pheno_text = ifelse(is.na(Phenotype), "Standard / No Markers listed", Phenotype))
+    } else {
+      nodes_df$pheno_text <- "Standard / No Markers listed"
+    }
     
     
     g <- graph_from_data_frame(d = hub_data %>% 
@@ -292,7 +332,7 @@ server <- function(input, output, session) {
       mutate(label = ifelse(type == "Protein", id, NA), font.size = ifelse(type == "Protein", 55, 10), font.color = ifelse(type == "Protein", "black", "transparent"),
              font.face = ifelse(type == "Protein", "bold", "normal"),
              shape = ifelse(type == "Protein", "diamond", "dot"), size = ifelse(type == "Protein", 40, 20), color = ifelse(type == "Protein", "black", lineage_colours[shape_map]),
-             original_color = color, original_font_color = font.color, title = paste0("<p><b>", id, "</b><br>Type: ", type, "<br>Module: ", module, "<br>Lineage: ", shape_map, "</p>"))
+             original_color = color, original_font_color = font.color, title = paste0("<p><b>", id, "</b><br>Type: ", type, "<br>Module: ", module, "<br>Lineage: ", shape_map, "<br><b>Markers: </b>", pheno_text, "</p>"))
     
     
     vis_edges <- igraph::as_data_frame(g, what = "edges") %>% 
@@ -346,6 +386,7 @@ server <- function(input, output, session) {
       #Force atlas based 
       visPhysics(solver = "forceAtlas2Based", 
                  forceAtlas2Based = list(gravitationalConstant = -200, springLength = 150), 
+                 
                  stabilization = list(enabled = TRUE, iterations = 1000)) %>%
       visEvents(stabilizationIterationsDone = "function () {this.setOptions({physics: false});}") %>%
       visOptions(highlightNearest = list(enabled = TRUE, degree = 1, hover = TRUE), 
@@ -474,15 +515,30 @@ server <- function(input, output, session) {
     
     lineage_colours <- make_lineage_palette(hub_data$Sub.Lineage)
     
+    # Base node data frame template
+    base_select_env <- c("trait1", "Sub.Lineage")
+    if("Phenotype" %in% colnames(environmental_hits)) {
+      base_select_env <- c(base_select_env, "Phenotype")
+    }
+    
     nodes_df <- data.frame(name = unique(c(hub_data$trait1, hub_data$trait2))) %>%
-      left_join(environmental_hits %>% select(trait1, Sub.Lineage) %>% distinct(trait1, .keep_all = TRUE),
+      left_join(environmental_hits %>% 
+                  select(all_of(base_select_env)) %>% 
+                  distinct(trait1, .keep_all = TRUE),
                 by = c("name" = "trait1")) %>%
       left_join(env_module_lookup, by = "name") %>%
       mutate(
         type = ifelse(!is.na(Sub.Lineage), "IP", "Protein"),
-        shape_map = ifelse(type == "Protein", "Protein", Sub.Lineage),
+        shape_map = ifelse(type == "Protein", "Protein", Sub.Lineage), # <-- Keep Color mapped to Sub.Lineage!
         module = ifelse(is.na(module), "Unassigned", module)
       )
+    
+    if("Phenotype" %in% colnames(nodes_df)) {
+      nodes_df <- nodes_df %>% 
+        mutate(pheno_text = ifelse(is.na(Phenotype), "Standard / No Markers listed", Phenotype))
+    } else {
+      nodes_df$pheno_text <- "Standard / No Markers listed"
+    }
     
     g <- graph_from_data_frame(
       d = hub_data %>% select(trait1, trait2, rhoE, abs_rhoE, edge_sign),
@@ -499,7 +555,7 @@ server <- function(input, output, session) {
              font.color = ifelse(type == "Protein", "black", "transparent"),
              font.face = ifelse(type == "Protein", "bold", "normal"),
              shape = ifelse(type == "Protein", "diamond", "dot"), size = ifelse(type == "Protein", 40, 20),  color = ifelse(type == "Protein", "black", lineage_colours[shape_map]), 
-             original_color = color, original_font_color = font.color, title = paste0("<p><b>", id, "</b><br>Type: ", type, "<br>Module: ", module, "<br>Lineage: ", shape_map, "</p>"))
+             original_color = color, original_font_color = font.color, title = paste0("<p><b>", id, "</b><br>Type: ", type, "<br>Module: ", module, "<br>Lineage: ", shape_map, "<br><b>Markers: </b>", pheno_text, "</p>"))
     
     
     vis_edges <- igraph::as_data_frame(g, what = "edges") %>%
@@ -662,7 +718,7 @@ server <- function(input, output, session) {
     mod <- input$env_mod; lin <- input$env_lin; prot <- input$env_prot
     valid_mod <- data$nodes %>% filter(type == "IP"); if(lin != "All") valid_mod <- valid_mod %>% filter(shape_map == lin); if(prot != "All") valid_mod <- valid_mod %>% filter(id %in% c((data$edges %>% filter(from == prot | to == prot))$from, (data$edges %>% filter(from == prot | to == prot))$to))
     valid_lin <- data$nodes %>% filter(type == "IP"); if(mod != "All") valid_lin <- valid_lin %>% filter(module == mod); if(prot != "All") valid_lin <- valid_lin %>% filter(id %in% c((data$edges %>% filter(from == prot | to == prot))$from, (data$edges %>% filter(from == prot | to == prot))$to))
-    valid_prot <- data$nodes %>% filter(type == "IP"); if(mod != "All") valid_prot <- valid_prot %>% filter(module == mod); if(lin != "All") valid_prot <- valid_prot %>% filter(shape_map == lin)
+    valid_prot <- data$nodes %>% filter(type == "IP"); if(mod != "All") valid_prot <- valid_prot %>% filter(module == mod); if(lin != "All") valid_prot %>% filter(shape_map == lin)
     eprot <- data$edges %>% filter(from %in% valid_prot$id | to %in% valid_prot$id)
     updateSelectInput(session, "env_mod", choices = c("All", as.character(sort(unique(valid_mod$module[!is.na(valid_mod$module)])))), selected = ifelse(mod %in% valid_mod$module, mod, "All"))
     updateSelectInput(session, "env_lin", choices = c("All", as.character(sort(unique(valid_lin$shape_map)))), selected = ifelse(lin %in% valid_lin$shape_map, lin, "All"))
@@ -696,5 +752,14 @@ server <- function(input, output, session) {
 
 
 
+
+
+
+
+
+
+
+
 #Run App
+
 shinyApp(ui = ui, server = server)
