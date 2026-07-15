@@ -49,7 +49,7 @@ build_dynamic_module_legend <- function(active_modules, module_colours, is_genet
   }
   
   HTML(paste0(
-    '<div style="padding: 8px; background-color: #f9f9f9; border-radius: 2px; height: 710px; overflow-y: auto; border: 1px solid #ddd;">',
+    '<div style="padding: 8px; background-color: #f9f9f9; border-radius: 2px; height: 1000px; overflow-y: auto; border: 1px solid #ddd;">',
     
     #Node size and centrality 
     '<h4 style="text-align: center; font-weight: bold; margin-top: 0; font-size: 20px;">Nodes & Centrality</h4>',
@@ -194,6 +194,8 @@ server <- function(input, output, session) {
     vis_nodes <- igraph::as_data_frame(g, what = "vertices") %>% rename(id = name) %>%
       mutate(label = id, 
              value = original_centrality, 
+             font.size = 30,
+             font.face = "bold",
              color = ifelse(module %in% names(module_colours), module_colours[module], "#cccccc"), 
              original_color = color, 
              title = paste0("<p><b>", id, "</b><br>Module: ", module, 
@@ -223,7 +225,7 @@ server <- function(input, output, session) {
       visPhysics(solver = "forceAtlas2Based", forceAtlas2Based = list(gravitationalConstant = -200, springLength = 150), stabilization = list(enabled = TRUE, iterations = 1000)) %>%
       visEvents(stabilizationIterationsDone = "function () {this.setOptions({physics: false});}") %>%
       visOptions(highlightNearest = list(enabled = TRUE, degree = 1, hover = TRUE), nodesIdSelection = list(enabled = TRUE, main = "Search by Name")) %>%
-      visEdges(smooth = list(enabled = TRUE, type = "continuous"), scaling = list(min = 1, max = 7)) %>% 
+      visEdges(smooth = list(enabled = TRUE, type = "continuous"), scaling = list(min = 1.5, max = 8)) %>% 
       visInteraction(navigationButtons = TRUE ) %>%
       visExport(type = "png", name = "protein_protein_gen")
   })
@@ -268,6 +270,8 @@ server <- function(input, output, session) {
     
     vis_nodes <- igraph::as_data_frame(g, what = "vertices") %>% rename(id = name) %>%
       mutate(label = id, value = original_centrality,
+             font.size = 30,
+             font.face = "bold",
              color = ifelse(module %in% names(module_colours), module_colours[module], "#cccccc"),
              original_color = color, 
              title = paste0("<p><b>", id, "</b><br>Module: ", module, 
@@ -297,7 +301,7 @@ server <- function(input, output, session) {
       visPhysics(solver = "forceAtlas2Based", forceAtlas2Based = list(gravitationalConstant = -200, springLength = 150), stabilization = list(enabled = TRUE, iterations = 1000)) %>%
       visEvents(stabilizationIterationsDone = "function () {this.setOptions({physics: false});}") %>%
       visOptions(highlightNearest = list(enabled = TRUE, degree = 1, hover = TRUE), nodesIdSelection = list(enabled = TRUE, main = "Search by Name")) %>%
-      visEdges(smooth = list(enabled = TRUE, type = "continuous"), scaling = list(min = 1, max = 7)) %>% 
+      visEdges(smooth = list(enabled = TRUE, type = "continuous"), scaling = list(min = 1.5, max = 8)) %>% 
       visInteraction(navigationButtons = TRUE) %>%
       visExport(type = "png", name = "protein_protein_env")
   })

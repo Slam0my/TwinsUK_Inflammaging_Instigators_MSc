@@ -184,7 +184,7 @@ ui <- dashboardPage(
                 box(width = 10, 
                     status = "primary", 
                     visNetworkOutput("network_graph_gen", 
-                                     height = "800px")),
+                                     height = "1000px")),
                 box(title = "Key", 
                     width = 2, 
                     status = "primary", 
@@ -245,7 +245,7 @@ ui <- dashboardPage(
                 box(width = 10, 
                     status = "success", 
                     visNetworkOutput("network_graph_env", 
-                                     height = "800px")),
+                                     height = "1000px")),
                 box(title = "Key", 
                     width = 2, 
                     status = "success", 
@@ -329,7 +329,7 @@ server <- function(input, output, session) {
                                                weights = E(g)$abs_rhoG)$membership)
     
     vis_nodes <- igraph::as_data_frame(g, what = "vertices") %>% rename(id = name) %>%
-      mutate(label = ifelse(type == "Protein", id, NA), font.size = ifelse(type == "Protein", 55, 10), font.color = ifelse(type == "Protein", "black", "transparent"),
+      mutate(label = ifelse(type == "Protein", id, NA), font.size = ifelse(type == "Protein", 85, 10), font.color = ifelse(type == "Protein", "black", "transparent"),
              font.face = ifelse(type == "Protein", "bold", "normal"),
              shape = ifelse(type == "Protein", "diamond", "dot"), size = ifelse(type == "Protein", 40, 20), color = ifelse(type == "Protein", "black", lineage_colours[shape_map]),
              original_color = color, original_font_color = font.color, title = paste0("<p><b>", id, "</b><br>Type: ", type, "<br>Module: ", module, "<br>Lineage: ", shape_map, "<br><b>Markers: </b>", pheno_text, "</p>"))
@@ -395,7 +395,7 @@ server <- function(input, output, session) {
       
       visEdges(
         smooth = list(enabled = TRUE, type = "continuous"),
-        scaling = list(min = 1, max = 7)) %>%
+        scaling = list(min = 1.5, max = 8)) %>%
       visExport(type = "png", name = "IP_Protein_Gen") %>%
       visInteraction(navigationButtons = TRUE, tooltipDelay = 0)
   })
@@ -551,7 +551,7 @@ server <- function(input, output, session) {
     
     vis_nodes <- igraph::as_data_frame(g, what = "vertices") %>% rename(id = name) %>%
       mutate(label = ifelse(type == "Protein", id, NA), 
-             font.size = ifelse(type == "Protein", 55, 10), 
+             font.size = ifelse(type == "Protein", 85, 10), 
              font.color = ifelse(type == "Protein", "black", "transparent"),
              font.face = ifelse(type == "Protein", "bold", "normal"),
              shape = ifelse(type == "Protein", "diamond", "dot"), size = ifelse(type == "Protein", 40, 20),  color = ifelse(type == "Protein", "black", lineage_colours[shape_map]), 
@@ -615,7 +615,7 @@ server <- function(input, output, session) {
                                            pull(id))) %>%
       
       visEdges(smooth = list(enabled = TRUE, type = "continuous"),
-               scaling = list(min = 1, max = 7)) %>% 
+               scaling = list(min = 1.5, max = 8)) %>% 
       visExport(type = "png", name = "IP_Protein_Env") %>%
       visInteraction(navigationButtons = TRUE, tooltipDelay = 0)
   })
